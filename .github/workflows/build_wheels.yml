@@ -23,42 +23,41 @@ jobs:
       uses: actions/checkout@v4
       with:
         submodules: recursive
-
-
-    - name: Install Visual Studio Build Tools
-      shell: pwsh
-      run: |
-        choco install -y visualstudio2022-workload-vctools --params "--add Microsoft.VisualStudio.Component.VC.CMake.Project"
-        $ChocolateyProfile = "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1"
-        if (Test-Path $ChocolateyProfile) { 
-            Import-Module $ChocolateyProfile
-            refreshenv
-        } else {
-            Write-Error "Chocolatey profile module not found at $ChocolateyProfile"
-            exit 1
-        }
-        # Дополнительная проверка установки
-        if (-not (Test-Path "${env:ProgramFiles(x86)}\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC")) {
-            exit 1
-        }
-    - name: Install CUDA ${{ matrix.cuda-version }}
-      uses: Jimver/cuda-toolkit@v0.2.24
-      with:
-        cuda: ${{ matrix.cuda-version }}
-        sub-packages: '["nvcc", "cudart"]'
-        method: local
-        use-local-cache: false
         
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
-        cache: 'pip'
-
+        
     - name: upgrade pip
       shell: pwsh
       run: |
         python -m pip install --upgrade pip
+        
+    - name: Get pip cache dir
+      id: pip-cache
+      shell: python
+      run: |
+        import os
+        import platform
+        from os.path import expanduser
+    
+        home = expanduser("~")
+        cache_path = {
+          "Linux": f"{home}/.cache/pip",
+          "Darwin": f"{home}/Library/Caches/pip",
+          "Windows": f"{home}\\AppData\\Local\\pip\\Cache"
+        }[platform.system()]
+    
+        print(f"::set-output name=dir::{cache_path}")
+    
+    - name: Cache pip
+      uses: actions/cache@v4
+      with:
+        path: ${{ steps.pip-cache.outputs.dir }}
+        key: pip-${{ runner.os }}-${{ hashFiles('requirements.txt') }}
+        restore-keys: |
+          pip-${{ runner.os }}-
 
     - name: Install setuptools wheel ninja
       shell: pwsh
@@ -73,5 +72,5 @@ jobs:
     - name: Install triton-window
       shell: pwsh
       run: |
-        pip install triton-windows==2.2.0
+        pip install triton-windows
 

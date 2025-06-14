@@ -32,11 +32,9 @@ jobs:
         export-path-to-vs: true
         
     - name: Install CUDA ${{ matrix.cuda-version }}
-      uses: Jimver/cuda-toolkit@v0.2.25
-      with:
-        cuda: ${{ matrix.cuda-version }}
-        sub-packages: '["nvcc", "cudart"]'
-        method: network
+      id: cuda-toolkit
+      uses: Jimver/cuda-toolkit@master
+        
         
     - name: Add CUDA to PATH
       shell: pwsh

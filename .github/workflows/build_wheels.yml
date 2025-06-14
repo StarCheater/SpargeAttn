@@ -1,9 +1,12 @@
-name: Build SpargeAttn Wheels
+name: Build SpargeAttn Wheels (Windows)
 
 on:
   push:
     branches: [ main, master ]
   workflow_dispatch:
+  
+permissions:
+  contents: read
 
 jobs:
   build-wheels:
@@ -21,8 +24,28 @@ jobs:
       with:
         submodules: recursive
 
-    - name: Setup CUDA ${{ matrix.cuda-version }}
-      if: matrix.os == 'windows-latest'
-      uses: Jimver/cuda-toolkit@v0.2.24
+    - name: Install CUDA ${{ matrix.cuda-version }}
+      uses: Jimver/cuda-toolkit@v0.2.25
       with:
         cuda: ${{ matrix.cuda-version }}
+        components: nvcc_${{ matrix.cuda-version }},cudart
+        
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip'
+
+    - name: Restore build environment cache
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/pip
+          C:\Users\runneradmin\AppData\Local\pip\Cache
+        key: deps-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.cuda-version }}-${{ hashFiles('requirements.txt') }}
+
+    - name: Install Visual Studio Build Tools
+      shell: pwsh
+      run: |
+        choco install -y visualstudio2022-workload-vctools --params "--add Microsoft.VisualStudio.Component.VC.CMake.Project"
+        refreshenv

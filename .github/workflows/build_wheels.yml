@@ -30,6 +30,7 @@ jobs:
         arch: x64
         export-path-to-vcvarsall: true
         export-path-to-vs: true
+        
     - name: Verify cl.exe
-      shell: pwsh
-      run: cl.exe /Bv
+      #shell: pwsh
+      run: CL.EXE /Bv

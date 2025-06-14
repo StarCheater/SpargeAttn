@@ -36,4 +36,4 @@ jobs:
       shell: pwsh
       run: |
         cl.exe /Bv
-        nvcc --version
+

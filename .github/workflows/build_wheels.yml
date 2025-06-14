@@ -25,20 +25,9 @@ jobs:
         submodules: recursive
 
     - name: Install CUDA ${{ matrix.cuda-version }}
-      uses: Jimver/cuda-toolkit@v0.2.25
+      uses: Jimver/cuda-toolkit@v0.2.24
       with:
         cuda: ${{ matrix.cuda-version }}
         sub-packages: '["nvcc", "cudart"]'
         method: local
         use-local-cache: false
-
-    - name: Verify CUDA installation
-      shell: pwsh
-      run: |
-        nvcc --version
-        $cudaVersion = "${{ matrix.cuda-version }}"
-        $cudaPath = "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v$($cudaVersion.Split('.')[0]).$($cudaVersion.Split('.')[1])"
-        if (-not (Test-Path $cudaPath)) {
-          Write-Error "CUDA path $cudaPath not found"
-          exit 1
-        }

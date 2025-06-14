@@ -51,10 +51,3 @@ jobs:
         pip install torch==2.3.0+cu121 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
         pip install triton-windows==2.2.0
 
-    - name: Cache build environment
-      uses: actions/cache@v3
-      with:
-        path: |
-          ~/.cache/pip
-          C:\Users\runneradmin\AppData\Local\pip\Cache
-        key: deps-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.cuda-version }}-${{ hashFiles('requirements.txt') }}

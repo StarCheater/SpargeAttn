@@ -33,4 +33,4 @@ jobs:
         
     - name: Verify cl.exe
       #shell: pwsh
-      run: CL.EXE /v
+      run: CL.EXE ">cl"

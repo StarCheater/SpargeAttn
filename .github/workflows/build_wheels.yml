@@ -31,6 +31,22 @@ jobs:
         export-path-to-vcvarsall: true
         export-path-to-vs: true
         
-    - name: Verify cl.exe
-      #shell: pwsh
-      run: CL.EXE ">cl"
+    - name: Install CUDA ${{ matrix.cuda-version }}
+      uses: Jimver/cuda-toolkit@v0.2.25
+      with:
+        cuda: ${{ matrix.cuda-version }}
+        sub-packages: '["nvcc", "cudart"]'
+        method: network
+        
+    - name: Add CUDA to PATH
+      shell: pwsh
+      run: |
+        $cudaVersion = "${{ matrix.cuda-version }}"
+        $cudaMajorMinor = $cudaVersion -replace '(\d+\.\d+)\..*', '$1'
+        $cudaPath = "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v$cudaMajorMinor"
+        echo "CUDA_PATH=$cudaPath" | Out-File -FilePath $env:GITHUB_ENV -Append
+        echo "PATH=$cudaPath\bin;$env:PATH" | Out-File -FilePath $env:GITHUB_ENV -Append
+    
+    - name: Verify CUDA installation
+      shell: pwsh
+      run: nvcc --version

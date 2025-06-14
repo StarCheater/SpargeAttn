@@ -21,7 +21,7 @@ from packaging.version import parse, Version
 from typing import List, Set
 import warnings
 
-from setuptools import setup, find_packages
+from setuptools import setup, find_packages, Extension
 import torch
 from torch.utils.cpp_extension import BuildExtension, CUDAExtension, CUDA_HOME
 
@@ -31,7 +31,9 @@ if sys.platform == 'win32':
     extras_require = {'triton': ['triton-windows>=3.3.1,<3.4']}
 else:
     extras_require = {'triton': ['triton>=3.2.0']}
-    
+
+cuda_version = os.environ.get('CUDA_VERSION', '12.0')
+
 def run_instantiations(src_dir: str):
     base_path = Path(src_dir)
     py_files = [
@@ -161,7 +163,21 @@ for capability in compute_capabilities:
     if capability.endswith("+PTX"):
         NVCC_FLAGS += ["-gencode", f"arch=compute_{num},code=compute_{num}"]
 
-ext_modules = []
+ext_modules = [
+    Extension(
+        'spas_sage_attn.cuda_ops',
+        sources=['spas_sage_attn/cuda_kernels.cu'],
+        libraries=['cudart'],
+        extra_compile_args={
+            'nvcc': [
+                f'-ccbin=cl.exe',
+                '-Xcompiler=/MD',
+                f'-gencode=arch=compute_80,code=sm_80',
+                f'-gencode=arch=compute_89,code=sm_89'
+            ]
+        }
+    )
+]
 
 run_instantiations("csrc/qattn/instantiations_sm80")
 run_instantiations("csrc/qattn/instantiations_sm89")
@@ -223,5 +239,5 @@ setup(
     ],
     ext_modules=ext_modules,
     extras_require=extras_require,
-    cmdclass={"build_ext": BuildExtension},
+    cmdclass={"build_ext": CUDAExtension},
 )

@@ -24,6 +24,23 @@ jobs:
       with:
         submodules: recursive
 
+
+    - name: Install Visual Studio Build Tools
+      shell: pwsh
+      run: |
+        choco install -y visualstudio2022-workload-vctools --params "--add Microsoft.VisualStudio.Component.VC.CMake.Project"
+        $ChocolateyProfile = "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1"
+        if (Test-Path $ChocolateyProfile) { 
+            Import-Module $ChocolateyProfile
+            refreshenv
+        } else {
+            Write-Error "Chocolatey profile module not found at $ChocolateyProfile"
+            exit 1
+        }
+        # Дополнительная проверка установки
+        if (-not (Test-Path "${env:ProgramFiles(x86)}\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC")) {
+            exit 1
+        }
     - name: Install CUDA ${{ matrix.cuda-version }}
       uses: Jimver/cuda-toolkit@v0.2.24
       with:
@@ -37,12 +54,6 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
-
-    - name: Install Visual Studio Build Tools
-      shell: pwsh
-      run: |
-        choco install -y visualstudio2022-workload-vctools --params "--add Microsoft.VisualStudio.Component.VC.CMake.Project"
-        refreshenv
 
     - name: upgrade pip
       shell: pwsh

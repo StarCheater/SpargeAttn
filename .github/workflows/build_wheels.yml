@@ -66,6 +66,8 @@ jobs:
       with:
         cuda: ${{ matrix.cuda-version }}
         sub-packages: '["nvcc", "cudart", "cublas", "curand"]'
+        use-local-cache: false
+        use-github-cache: true
         method: network
 
     - name: Install Visual Studio Build Tools

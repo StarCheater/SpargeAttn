@@ -69,6 +69,18 @@ jobs:
         use-local-cache: false
         use-github-cache: true
         method: network
+        
+      # 3. Явная настройка переменных среды CUDA
+    - name: Set CUDA environment variables
+      shell: pwsh
+      run: |
+        $cudaVersion = "${{ matrix.cuda-version }}"
+        $cudaMajorMinor = $cudaVersion -replace '(\d+\.\d+)\..*', '$1'
+        $cudaPath = "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v$cudaMajorMinor"
+        echo "CUDA_PATH=$cudaPath" | Out-File -FilePath $env:GITHUB_ENV -Append
+        echo "PATH=$cudaPath\bin;$env:PATH" | Out-File -FilePath $env:GITHUB_ENV -Append
+        Write-Host "CUDA_PATH set to $cudaPath"
+        Write-Host "PATH updated"
 
     - name: Install Visual Studio Build Tools
       shell: pwsh
@@ -86,11 +98,28 @@ jobs:
         if (-not (Test-Path "${env:ProgramFiles(x86)}\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC")) {
             exit 1
         }
+# 5. Проверка наличия компилятора MSVC
+    - name: Verify MSVC installation
+      shell: pwsh
+      run: |
+        if (-not (Get-Command cl.exe -ErrorAction SilentlyContinue)) {
+          Write-Error "MSVC (cl.exe) не найден! Проверьте установку build tools."
+          exit 1
+        } else {
+          Write-Host "MSVC (cl.exe) успешно найден."
+        }
 
     - name: Install torch==2.3.0+cu121 torchvision torchaudio
       shell: pwsh
       run: |
         pip install torch==2.3.0+cu121 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+
+    # 8. Проверка наличия CUDA и torch
+    - name: Verify CUDA and torch
+      shell: pwsh
+      run: |
+        nvcc --version
+        python -c "import torch; print('Torch CUDA available:', torch.cuda.is_available())"
 
     - name: Build wheel
       shell: pwsh

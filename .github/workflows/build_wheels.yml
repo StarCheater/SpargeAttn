@@ -29,7 +29,6 @@ jobs:
       with:
         arch: x64
         version: 17  # Visual Studio 2022
-        toolset: 14.38  # Соответствует VS 2022 17.8+
         
     - name: Verify cl.exe
       shell: pwsh

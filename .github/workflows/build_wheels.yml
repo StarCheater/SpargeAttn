@@ -9,15 +9,15 @@ permissions:
   contents: read
 
 jobs:
-  build-wheels:
+  install-deps:
+    runs-on: windows-latest
     strategy:
       matrix:
-        os: [windows-latest]
-        python-version: ['3.12']
-        cuda-version: ['12.3.0']
+        python-version: ['3.9']
+        cuda-version: ['12.1.1']
       fail-fast: false
+    timeout-minutes: 20
 
-    runs-on: ${{ matrix.os }}
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -28,24 +28,33 @@ jobs:
       uses: Jimver/cuda-toolkit@v0.2.25
       with:
         cuda: ${{ matrix.cuda-version }}
-        components: nvcc_${{ matrix.cuda-version }},cudart
-        
+        sub-packages: '["nvcc", "cudart"]'
+        method: local
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
 
-    - name: Restore build environment cache
+    - name: Install Visual Studio Build Tools
+      shell: pwsh
+      run: |
+        choco install -y visualstudio2022-workload-vctools --params "--add Microsoft.VisualStudio.Component.VC.CMake.Project"
+        refreshenv
+
+    - name: Install Python dependencies
+      shell: pwsh
+      run: |
+        python -m pip install --upgrade pip
+        pip install setuptools wheel ninja
+        pip install torch==2.3.0+cu121 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+        pip install triton-windows==2.2.0
+
+    - name: Cache build environment
       uses: actions/cache@v3
       with:
         path: |
           ~/.cache/pip
           C:\Users\runneradmin\AppData\Local\pip\Cache
         key: deps-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.cuda-version }}-${{ hashFiles('requirements.txt') }}
-
-    - name: Install Visual Studio Build Tools
-      shell: pwsh
-      run: |
-        choco install -y visualstudio2022-workload-vctools --params "--add Microsoft.VisualStudio.Component.VC.CMake.Project"
-        refreshenv

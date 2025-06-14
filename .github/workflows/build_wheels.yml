@@ -30,18 +30,15 @@ jobs:
         cuda: ${{ matrix.cuda-version }}
         sub-packages: '["nvcc", "cudart"]'
         method: local
-        use-local-cache: false  # Отключаем внутреннее кеширование
+        use-local-cache: false
 
     - name: Verify CUDA installation
       shell: pwsh
       run: |
         nvcc --version
-        if (-not (Test-Path "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v${{ matrix.cuda-version | replace('.', '')[0,4] }}")) {
+        $cudaVersion = "${{ matrix.cuda-version }}"
+        $cudaPath = "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v$($cudaVersion.Split('.')[0]).$($cudaVersion.Split('.')[1])"
+        if (-not (Test-Path $cudaPath)) {
+          Write-Error "CUDA path $cudaPath not found"
           exit 1
         }
-
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
-        cache: 'pip'

@@ -27,6 +27,11 @@ from torch.utils.cpp_extension import BuildExtension, CUDAExtension, CUDA_HOME
 
 HAS_SM90 = False
 
+if sys.platform == 'win32':
+    extras_require = {'triton': ['triton-windows>=3.3.1,<3.4']}
+else:
+    extras_require = {'triton': ['triton>=3.2.0']}
+    
 def run_instantiations(src_dir: str):
     base_path = Path(src_dir)
     py_files = [
@@ -217,5 +222,6 @@ setup(
         'Operating System :: OS Independent',
     ],
     ext_modules=ext_modules,
+    extras_require=extras_require,
     cmdclass={"build_ext": BuildExtension},
 )

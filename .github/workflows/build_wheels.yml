@@ -62,7 +62,7 @@ jobs:
         pip install triton-windows
         
     - name: Install CUDA ${{ matrix.cuda-version }}
-      uses: Jimver/cuda-toolkit@v0.2.25
+      uses: Jimver/cuda-toolkit@v0.2.24
       with:
         cuda: ${{ matrix.cuda-version }}
         sub-packages: '["nvcc", "cudart", "cublas", "curand"]'

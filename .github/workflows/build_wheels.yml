@@ -44,10 +44,29 @@ jobs:
         choco install -y visualstudio2022-workload-vctools --params "--add Microsoft.VisualStudio.Component.VC.CMake.Project"
         refreshenv
 
-    - name: Install Python dependencies
+    - name: upgrade pip
       shell: pwsh
       run: |
         python -m pip install --upgrade pip
+
+    - name: Install setuptools wheel ninja
+      shell: pwsh
+      run: |
         pip install setuptools wheel ninja
+
+    - name: Install torch==2.3.0+cu121 torchvision torchaudio
+      shell: pwsh
+      run: |
         pip install torch==2.3.0+cu121 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+
+    - name: Install triton-window
+      shell: pwsh
+      run: |
         pip install triton-windows==2.2.0
+
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip'

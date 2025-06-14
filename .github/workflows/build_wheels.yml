@@ -33,7 +33,7 @@ jobs:
         
     - name: Install CUDA ${{ matrix.cuda-version }}
       id: cuda-toolkit
-      uses: Jimver/cuda-toolkit@0.2.24
+      uses: Jimver/cuda-toolkit@v0.2.24
       with:
         cuda: ${{ matrix.cuda-version }}
         sub-packages: '["nvcc", "cudart", "cublas", "curand"]'

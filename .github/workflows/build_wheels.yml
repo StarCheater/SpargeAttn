@@ -24,110 +24,15 @@ jobs:
       with:
         submodules: recursive
         
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
-    
-    - name: Get pip cache dir (Windows)
-      id: pip-cache
-      shell: python
-      run: |
-        import os
-        from os.path import expanduser
-        home = expanduser("~")
-        cache_path = os.path.join(home, "AppData", "Local", "pip", "Cache")
-        with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-            print(f'dir={cache_path}', file=f)
-    
-    - name: Cache pip
-      uses: actions/cache@v4
-      with:
-        path: ${{ steps.pip-cache.outputs.dir }}
-        key: pip-${{ runner.os }}-${{ hashFiles('requirements.txt') }}
-
-    - name: upgrade pip
-      shell: pwsh
-      run: |
-        python -m pip install --upgrade pip
-        
-    - name: Install setuptools wheel ninja
-      shell: pwsh
-      run: |
-        pip install setuptools wheel ninja
-
-    - name: Install triton-window
-      shell: pwsh
-      run: |
-        pip install triton-windows
-        
-    - name: Install CUDA ${{ matrix.cuda-version }}
-      uses: Jimver/cuda-toolkit@v0.2.24
-      with:
-        cuda: ${{ matrix.cuda-version }}
-        sub-packages: '["nvcc", "cudart", "cublas", "curand"]'
-        use-local-cache: false
-        use-github-cache: true
-        method: network
-
-    # 2. Установка MSVC через официальное действие
     - name: Setup MSVC
       uses: ilammy/msvc-dev-cmd@v1
       with:
         arch: x64
-        toolset: 14.3
-        sdk: 10.0.20348.0
-
-
-    # 4. Настройка переменных среды CUDA
-    - name: Configure CUDA paths
+        version: 17  # Visual Studio 2022
+        toolset: 14.38  # Соответствует VS 2022 17.8+
+        
+    - name: Verify cl.exe
       shell: pwsh
       run: |
-        $cudaVersion = "${{ matrix.cuda-version }}"
-        $cudaMajorMinor = $cudaVersion -replace '(\d+\.\d+)\..*', '$1'
-        $cudaPath = "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v$cudaMajorMinor"
-        echo "CUDA_PATH=$cudaPath" | Out-File -FilePath $env:GITHUB_ENV -Append
-        echo "PATH=$cudaPath\bin;$env:PATH" | Out-File -FilePath $env:GITHUB_ENV -Append
-      # 5. Проверка наличия компилятора
-    - name: Verify MSVC installation
-      shell: pwsh
-      run: |
-        $clPath = (Get-Command cl.exe -ErrorAction SilentlyContinue).Path
-        if (-not $clPath) {
-            Write-Error "❌ MSVC (cl.exe) not found in PATH: $env:PATH"
-            exit 1
-        }
-        Write-Host "✅ MSVC found at: $clPath"
-
-    - name: Install torch==2.3.0+cu121 torchvision torchaudio
-      shell: pwsh
-      run: |
-        pip install torch==2.3.0+cu121 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
-
-    # 8. Проверка наличия CUDA и torch
-    - name: Verify CUDA and torch
-      shell: pwsh
-      run: |
+        cl.exe /Bv
         nvcc --version
-        python -c "import torch; print('Torch CUDA available:', torch.cuda.is_available())"
-
-    - name: Build wheel
-      shell: pwsh
-      env:
-        TORCH_CUDA_ARCH_LIST: "8.0"
-      run: |
-        python setup.py bdist_wheel
-
-    - name: Test installation
-      shell: pwsh
-      run: |
-        $wheelFile = Get-ChildItem dist\*.whl | Select-Object -First 1
-        pip install $wheelFile.FullName
-        python -c "import spas_sage_attn; print(f'Version: {spas_sage_attn.__version__}')"
-
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: spargeattn-win-py${{ matrix.python-version }}-cu${{ matrix.cuda-version }}
-        path: dist/*.whl
-

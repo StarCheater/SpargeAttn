@@ -24,16 +24,15 @@ jobs:
       with:
         submodules: recursive
         
+    # 1. Явно указываем версию Visual Studio 2022
     - name: Setup MSVC
       uses: ilammy/msvc-dev-cmd@v1
       with:
-        #vsversion: 17     # Visual Studio 2022
+        vsversion: 17     # Visual Studio 2022
         arch: x64         # 64-битная сборка
-        #toolset: 14.38    # MSVC v143 (VS 2022 17.8+)
-        #sdk: 10.0.20348.0 # Windows 10/11 SDK (опционально)
+        toolset: 14.38    # MSVC v143 (VS 2022 17.8+)
         
+    # 2. Проверка наличия cl.exe
     - name: Verify cl.exe
       shell: pwsh
-      run: |
-        cl.exe /Bv
-
+      run: cl.exe /Bv

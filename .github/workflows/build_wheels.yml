@@ -25,12 +25,9 @@ jobs:
         submodules: recursive
         
     # 1. Явно указываем версию Visual Studio 2022
-    - name: Setup MSVC
-      uses: TheMrMilchmann/setup-msvc-dev@v3
+    - uses: TheMrMilchmann/setup-msvc-dev@v3
       with:
         arch: x64
-        
-    # 2. Проверка наличия cl.exe
     - name: Verify cl.exe
       shell: pwsh
       run: cl.exe /Bv

@@ -9,9 +9,9 @@ jobs:
   build-wheels:
     strategy:
       matrix:
-        os: [windows-latest, ubuntu-latest]
-        python-version: ['3.10']
-        cuda-version: ['12.3']
+        os: [windows-latest]
+        python-version: ['3.12']
+        cuda-version: ['12.3.0']
       fail-fast: false
 
     runs-on: ${{ matrix.os }}
@@ -46,7 +46,7 @@ jobs:
           curl -L https://aka.ms/vs/17/release/vc_redist.x64.exe -o vcredist.exe
           ./vcredist.exe /install /quiet /norestart
         fi
-
+    - uses: ilammy/msvc-dev-cmd@v1
     - name: Build wheel
       env:
         TORCH_CUDA_ARCH_LIST: "8.0"

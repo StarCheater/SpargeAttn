@@ -28,49 +28,72 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
-        
-    - name: upgrade pip
-      shell: pwsh
-      run: |
-        python -m pip install --upgrade pip
-        
-    - name: Get pip cache dir
+    
+    - name: Get pip cache dir (Windows)
       id: pip-cache
       shell: python
       run: |
         import os
-        import platform
         from os.path import expanduser
-    
         home = expanduser("~")
-        cache_path = {
-          "Linux": f"{home}/.cache/pip",
-          "Darwin": f"{home}/Library/Caches/pip",
-          "Windows": f"{home}\\AppData\\Local\\pip\\Cache"
-        }[platform.system()]
-    
-        print(f"::set-output name=dir::{cache_path}")
+        cache_path = os.path.join(home, "AppData", "Local", "pip", "Cache")
+        with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+            print(f'dir={cache_path}', file=f)
     
     - name: Cache pip
       uses: actions/cache@v4
       with:
         path: ${{ steps.pip-cache.outputs.dir }}
         key: pip-${{ runner.os }}-${{ hashFiles('requirements.txt') }}
-        restore-keys: |
-          pip-${{ runner.os }}-
 
+    - name: upgrade pip
+      shell: pwsh
+      run: |
+        python -m pip install --upgrade pip
+        
     - name: Install setuptools wheel ninja
       shell: pwsh
       run: |
         pip install setuptools wheel ninja
+
+    - name: Install triton-window
+      shell: pwsh
+      run: |
+        pip install triton-windows
+        
+    - name: Install Visual Studio Build Tools
+      shell: pwsh
+      run: |
+        choco install -y visualstudio2022-workload-vctools --params "--add Microsoft.VisualStudio.Component.VC.CMake.Project"
+        $ChocolateyProfile = "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1"
+        if (Test-Path $ChocolateyProfile) { 
+            Import-Module $ChocolateyProfile
+            refreshenv
+        } else {
+            Write-Error "Chocolatey profile module not found at $ChocolateyProfile"
+            exit 1
+        }
+        # Дополнительная проверка установки
+        if (-not (Test-Path "${env:ProgramFiles(x86)}\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC")) {
+            exit 1
+        }
+        
+    - name: Install CUDA ${{ matrix.cuda-version }}
+      uses: Jimver/cuda-toolkit@v0.2.25
+      with:
+        cuda: ${{ matrix.cuda-version }}
+        sub-packages: '["nvcc", "cudart", "cublas", "curand"]'
+        method: network
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
 
     - name: Install torch==2.3.0+cu121 torchvision torchaudio
       shell: pwsh
       run: |
         pip install torch==2.3.0+cu121 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
 
-    - name: Install triton-window
-      shell: pwsh
-      run: |
-        pip install triton-windows
+
 

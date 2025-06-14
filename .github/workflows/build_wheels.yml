@@ -28,6 +28,8 @@ jobs:
     - uses: TheMrMilchmann/setup-msvc-dev@v3
       with:
         arch: x64
+        export-path-to-vcvarsall: true
+        export-path-to-vs: true
     - name: Verify cl.exe
       shell: pwsh
       run: cl.exe /Bv

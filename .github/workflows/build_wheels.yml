@@ -64,9 +64,3 @@ jobs:
       run: |
         pip install triton-windows==2.2.0
 
-
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
-        cache: 'pip'
